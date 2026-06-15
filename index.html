@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turbo: Reddit visibility on Google | M81</title>
+<link rel="icon" type="image/png" href="m81-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1c1611; --navy2:#c2570e; --accent:#f96a16; --ink:#1c1815;
+    --muted:#8a7d6e; --line:#ece3d7; --bg:#fbf5ee; --card:#ffffff;
+    --green:#2e7d52; --red:#b3402f; --wait:#b06a12; --wait-bg:#fbeede;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--navy2)}
+  h1,h2,.card-title{font-family:'Space Grotesk','Inter',sans-serif; letter-spacing:-.01em}
+
+  /* ===== hero ===== */
+  .hero{position:relative; overflow:hidden; padding:54px 24px 66px; color:var(--ink);
+    background:
+      radial-gradient(900px 520px at 90% -14%, rgba(249,106,22,.26), transparent 58%),
+      radial-gradient(680px 460px at 0% 118%, rgba(249,106,22,.12), transparent 58%),
+      linear-gradient(165deg,#fff6ec 0%, #fbefe3 55%, #f6e8d8 100%);}
+  .hero-rings{position:absolute; z-index:1; top:-330px; right:-280px; width:760px; height:760px; pointer-events:none; border-radius:50%;
+    background:repeating-radial-gradient(circle at center, transparent 0 55px, rgba(249,106,22,.11) 55px 57px);
+    -webkit-mask-image:radial-gradient(circle at center,#000,transparent 70%); mask-image:radial-gradient(circle at center,#000,transparent 70%);}
+  .hero::after{content:""; position:absolute; inset:0; z-index:1; pointer-events:none; opacity:.6;
+    background-image:radial-gradient(rgba(28,22,17,.07) 1px, transparent 1.5px); background-size:23px 23px;
+    -webkit-mask-image:linear-gradient(172deg,#000 16%,transparent 70%); mask-image:linear-gradient(172deg,#000 16%,transparent 70%);}
+  .hero-inner{position:relative; z-index:3; max-width:1080px; margin:0 auto}
+  .brandrow{display:flex; align-items:center; gap:13px; margin-bottom:36px}
+  .brandrow .brandmark{height:40px; width:auto; display:block}
+  .brandrow .bl1{font-family:'Space Grotesk',sans-serif; font-size:17px; color:#1c1815; font-weight:500}
+  .brandrow .bl1 b{font-weight:700}
+  .brandrow .bl-dot{color:var(--accent); font-weight:700; margin:0 4px}
+  .brandrow .bl2{font-size:11.5px; color:#9a8c7c; margin-top:3px; letter-spacing:.06em; text-transform:uppercase}
+  .hero h1{font-family:'Space Grotesk',sans-serif; font-size:clamp(36px,5.4vw,60px); line-height:1.04;
+    letter-spacing:-.02em; margin:0 0 24px; max-width:20ch; color:#1c1815; font-weight:700}
+  .hero h1 .hl{color:var(--accent); border-bottom:6px solid rgba(249,106,22,.30); padding-bottom:1px}
+  .claim{font-family:'Space Grotesk',sans-serif; font-size:clamp(19px,2.3vw,26px); line-height:1.34;
+    font-weight:600; color:#241d16; max-width:780px; margin:0 0 24px}
+  .claim .c-em{color:var(--accent)}
+  .hero .prepared{display:inline-block; color:#7a6e60; font-size:12.5px; letter-spacing:.04em; margin:0;
+    background:rgba(255,255,255,.62); border:1px solid #efe2d3; border-radius:999px; padding:8px 16px}
+
+  /* ===== layout ===== */
+  .wrap{max-width:1080px; margin:0 auto; padding:48px 24px 10px}
+  .block{margin-top:52px}
+  .block:first-child{margin-top:8px}
+  .block-head h2{margin:0; font-size:23px; color:var(--navy); font-weight:700; display:flex; align-items:center; gap:12px}
+  .block-head h2::before{content:""; width:5px; height:24px; background:var(--accent); border-radius:3px; display:inline-block}
+  .block-head p{margin:6px 0 0 17px; color:var(--muted); font-size:14px; max-width:80ch}
+
+  /* ===== tables ===== */
+  .table-wrap{background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; margin-top:22px; box-shadow:0 4px 16px rgba(28,22,17,.05)}
+  table{width:100%; border-collapse:collapse; font-size:14px}
+  thead th{background:#1c1611; color:#fff; text-align:left; font-weight:600; padding:13px 16px; font-size:12.5px; letter-spacing:.03em}
+  tbody td{padding:13px 16px; border-top:1px solid var(--line); vertical-align:middle}
+  tbody tr:nth-child(even){background:#fdf8f1}
+  td.num{color:var(--muted); width:60px; font-weight:600}
+  td.num a{color:var(--navy2); text-decoration:none; font-weight:700}
+  .sub-sm{color:var(--navy2); font-weight:700}
+  td.topic a{color:var(--ink); text-decoration:none; font-weight:600}
+  td.topic a:hover{color:var(--navy2); text-decoration:underline}
+  .repcell a{color:var(--navy2); font-weight:600; text-decoration:none; white-space:nowrap}
+  .repcell a:hover{text-decoration:underline}
+  .rank-tag{display:inline-grid; place-items:center; min-width:34px; height:26px; padding:0 9px; border-radius:8px; font-weight:700; font-size:13px; background:#fdeee1; color:#c2570e}
+  .rank-tag.one{background:#e6f4ec; color:var(--green)}
+  .status{font-size:12px; font-weight:600; padding:4px 11px; border-radius:999px; white-space:nowrap}
+  .status.wait{background:var(--wait-bg); color:var(--wait)}
+  /* index keyword chips */
+  .kwcell{vertical-align:top}
+  .kwcount{display:inline-block; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; font-weight:700; color:var(--muted); margin-bottom:9px}
+  .kwtags{display:flex; flex-wrap:wrap; gap:7px}
+  .kwt{background:#fdeee1; color:#9a3f06; border:1px solid #f6d9c2; padding:5px 12px; border-radius:999px; font-size:13px; font-weight:600; line-height:1.25}
+  .idx tbody td{vertical-align:top}
+  .idx th:nth-child(1){width:54px}
+  .idx th:nth-child(2){width:168px}
+  .idx th:nth-child(3){width:120px}
+
+  /* ===== comment placement cards ===== */
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; margin-top:22px; overflow:hidden; box-shadow:0 4px 16px rgba(28,22,17,.05); scroll-margin-top:18px}
+  .card-head{padding:22px 24px 20px; border-bottom:1px solid var(--line)}
+  .card-meta{font-size:13px; color:var(--muted); display:flex; align-items:center; gap:9px; flex-wrap:wrap}
+  .card-meta .sub{color:var(--navy2); font-weight:700}
+  .card-meta .dot{color:#d8cab8}
+  .cpill{background:#fdeee1; color:#c2570e; border:1px solid #f6d9c2; font-size:12px; font-weight:700; padding:4px 12px; border-radius:999px; display:inline-block}
+  .cpill.one{background:#e6f4ec; color:var(--green); border-color:#c7e6d4}
+  .card-title{margin:9px 0 14px; font-size:19px; font-weight:600; color:var(--ink)}
+  .rankers{margin:0 0 16px; display:grid; gap:8px}
+  .rankers a{display:flex; gap:12px; align-items:baseline; text-decoration:none; padding:10px 14px; background:#fbf6ef; border:1px solid #efe4d5; border-radius:9px}
+  .rankers a:hover{background:#f8efe4; border-color:#e9d6c2}
+  .rankers .rsub{color:var(--navy2); font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; min-width:92px}
+  .rankers .rttl{color:#3a4658; font-size:13.5px; word-break:break-all}
+  .rankers .rgo{margin-left:auto; color:var(--navy2); font-weight:600; font-size:12.5px; white-space:nowrap}
+  .kw-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px}
+  .kw-label{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); font-weight:700; margin-right:4px; width:100%}
+  .kw{background:#fdeee1; color:#9a3f06; border:1px solid #f6d9c2; padding:5px 12px; border-radius:999px; font-size:13.5px; font-weight:600}
+
+  /* ===== screenshots ===== */
+  .shots{padding:8px 24px 24px}
+  .shot{margin:16px 0 0}
+  .shot figcaption{display:flex; align-items:center; gap:10px; margin-bottom:10px; background:#fbf6ef; border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:8px; padding:9px 14px}
+  .q-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); font-weight:700}
+  .q-text{font-size:15px; font-weight:600; color:var(--navy)}
+  .shot a{display:block}
+  .shot img{width:100%; height:auto; display:block; border-radius:10px; border:1px solid var(--line); box-shadow:0 3px 14px rgba(28,22,17,.08)}
+
+  /* ===== footer (cloned from M81 repo) ===== */
+  footer{max-width:1080px; margin:64px auto 0; padding:0 24px 66px; border-top:none; color:var(--muted); font-size:13px}
+  .m81card{position:relative; overflow:hidden; background:#fff; border-radius:30px; border:1px solid rgba(249,106,22,.18);
+    box-shadow:0 0 0 7px rgba(249,106,22,.04), 0 36px 90px rgba(249,106,22,.18); padding:46px 50px 42px; min-height:512px}
+  .m81card-inner{position:relative; z-index:2}
+  .m81-lock{display:flex; align-items:center; gap:11px}
+  .m81-lock img{height:36px; width:auto}
+  .m81-lock .bname{font-family:'Space Grotesk',sans-serif; font-size:32px; font-weight:700; color:#111}
+  .m81-watermark{position:absolute; left:0; right:0; bottom:34px; z-index:1; margin:0; text-align:center;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:clamp(44px,12vw,150px);
+    line-height:.82; letter-spacing:-.02em; color:#e0e0e0; white-space:nowrap; pointer-events:none}
+  .m81-method{margin-top:24px; border-top:1px solid #f0e8df; padding-top:22px}
+  .fineprint{color:#9a8c7c; font-size:14.5px; line-height:1.7; margin:0 0 16px}
+  .fineprint strong{color:#5b4f42}
+  .src{display:flex; flex-wrap:wrap; gap:18px; margin-top:10px}
+  .src span{background:#fbf6ef; border:1px solid #efe2d3; border-radius:8px; padding:7px 13px}
+
+  @media (max-width:760px){
+    .hero h1{font-size:30px}
+    .claim{font-size:19px}
+    .brandrow{flex-wrap:wrap}
+    .rankers a{flex-wrap:wrap; gap:4px}
+    .rankers .rgo{margin-left:0}
+    .m81card{padding:32px 24px; min-height:320px; border-radius:22px}
+    .m81-watermark{font-size:44px; bottom:28px}
+    thead{display:none}
+    table,tbody,tr,td{display:block; width:100%}
+    tbody tr{border-top:1px solid var(--line); padding:8px 0}
+    tbody td{border:none; padding:4px 16px}
+    td.num{display:none}
+  }
+  @media print{ body{background:#fff} .card,.table-wrap{box-shadow:none} }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-rings"></div>
+  <div class="hero-inner">
+    <div class="brandrow">
+      <img class="brandmark" src="m81-logo.png" alt="M81">
+      <div class="brandtext">
+        <div class="bl1"><b>M81</b><span class="bl-dot">·</span>SEO &amp; UGC Search Visibility</div>
+        <div class="bl2">Client SERP Performance Report</div>
+      </div>
+    </div>
+    <h1>Turbo: <span class="hl">Reddit</span> visibility on Google</h1>
+    <p class="claim">A keyword-by-keyword record of where Turbo is showing up in Google — the posts we published and the comments we placed, each backed by a live SERP screenshot.</p>
+    <p class="prepared">May 14 – Jun 14, 2026 &nbsp;·&nbsp; Google &nbsp;·&nbsp; United States &nbsp;·&nbsp; Prepared by M81</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ SECTION 1 · POSTS ============ -->
+  <section class="block">
+    <div class="block-head">
+      <h2>Posts</h2>
+      <p>Threads published this cycle, each with its full Ahrefs keyword report (hosted on Drive).</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Subreddit</th><th>Post</th><th>Ahrefs report</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="num">Post 1</td>
+            <td class="sub-sm">r/InstagramMarketing</td>
+            <td class="topic"><a href="https://www.reddit.com/r/InstagramMarketing/comments/1trfxek/best_tool_to_download_instagram_stories_and" target="_blank" rel="noopener">Best tool to download Instagram stories &amp; reels</a></td>
+            <!-- TODO: replace # with the Drive link to this Ahrefs report -->
+            <td class="repcell"><a href="#" target="_blank" rel="noopener">View report ↗</a></td>
+          </tr>
+          <tr>
+            <td class="num">Post 2</td>
+            <td class="sub-sm">r/youtube</td>
+            <td class="topic"><a href="https://www.reddit.com/r/youtube/comments/1u0n0a8/best_way_to_download_youtube_videos_with_subtitles/" target="_blank" rel="noopener">Best way to download YouTube videos with subtitles</a></td>
+            <td class="repcell"><a href="#" target="_blank" rel="noopener">View report ↗</a></td>
+          </tr>
+          <tr>
+            <td class="num">Post 3</td>
+            <td class="sub-sm">r/Facebook</td>
+            <td class="topic"><a href="https://www.reddit.com/r/facebook/comments/1u2f1ks/best_way_to_download_facebook_videos_on_windows" target="_blank" rel="noopener">Best way to download Facebook videos on Windows</a></td>
+            <td><span class="status wait">Awaiting crawl</span></td>
+          </tr>
+          <tr>
+            <td class="num">Post 4</td>
+            <td class="sub-sm">r/InstagramMarketing</td>
+            <td class="topic"><a href="https://www.reddit.com/r/InstagramMarketing/comments/1u39c5q/how_do_you_download_audio_from_an_instagram_reel/" target="_blank" rel="noopener">How do you download audio from an Instagram reel?</a></td>
+            <td class="repcell"><a href="#" target="_blank" rel="noopener">View report ↗</a></td>
+          </tr>
+          <tr>
+            <td class="num">Post 5</td>
+            <td class="sub-sm">r/youtube</td>
+            <td class="topic"><a href="https://www.reddit.com/r/youtube/comments/1u449se/how_do_you_download_youtube_video_with_dubbed/" target="_blank" rel="noopener">How do you download a YouTube video with dubbed audio?</a></td>
+            <td><span class="status wait">Awaiting crawl</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 2 · COMMENT RANKINGS ============ -->
+  <section class="block">
+    <div class="block-head">
+      <h2>Comment Rankings</h2>
+      <p>Each comment was placed on someone else’s thread and now ranks for several Google keywords at once. The index lists every placement; each card below shows its links, the keywords it ranks for, the comment’s position in the thread, and a SERP screenshot per keyword.</p>
+    </div>
+
+    <!-- INDEX -->
+    <div class="table-wrap">
+      <table class="idx">
+        <thead>
+          <tr><th>#</th><th>Subreddit</th><th>Comment rank</th><th>Keywords it ranks for</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="num"><a href="#c01">01 ↗</a></td>
+            <td class="sub-sm">r/macapps</td>
+            <td><span class="rank-tag">#4</span></td>
+            <td class="kwcell"><span class="kwcount">2 keywords</span><div class="kwtags"><span class="kwt">best youtube downloader for mac</span><span class="kwt">best mac youtube downloader</span></div></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="#c02">02 ↗</a></td>
+            <td class="sub-sm">r/DataHoarder</td>
+            <td><span class="rank-tag one">#1</span></td>
+            <td class="kwcell"><span class="kwcount">4 keywords</span><div class="kwtags"><span class="kwt">download youtube dubbed audio track</span><span class="kwt">download youtube video multi language audio</span><span class="kwt">youtube multi audio track downloader</span><span class="kwt">youtube video multiple language audio download</span></div></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="#c03">03 ↗</a></td>
+            <td class="sub-sm">r/downr</td>
+            <td><span class="rank-tag">#2</span></td>
+            <td class="kwcell"><span class="kwcount">5 keywords</span><div class="kwtags"><span class="kwt">best tiktok downloader</span><span class="kwt">how to download tiktok videos</span><span class="kwt">download tiktok videos</span><span class="kwt">how to save tiktok videos</span><span class="kwt">tiktok video downloader</span></div></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="#c04">04 ↗</a></td>
+            <td class="sub-sm">r/DataHoarder</td>
+            <td><span class="rank-tag">#3</span></td>
+            <td class="kwcell"><span class="kwcount">1 keyword</span><div class="kwtags"><span class="kwt">yt-dlp alternative</span></div></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="#c05">05 ↗</a></td>
+            <td class="sub-sm">r/CuttingEdgeEdits</td>
+            <td><span class="rank-tag one">#1</span></td>
+            <td class="kwcell"><span class="kwcount">4 keywords</span><div class="kwtags"><span class="kwt">reddit video downloader</span><span class="kwt">download reddit videos</span><span class="kwt">save reddit video with sound</span><span class="kwt">best reddit video downloader</span></div></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="#c06">06 ↗</a></td>
+            <td class="sub-sm">r/windowsapps</td>
+            <td><span class="rank-tag one">#1</span></td>
+            <td class="kwcell"><span class="kwcount">3 keywords</span><div class="kwtags"><span class="kwt">free twitter video downloader</span><span class="kwt">how to download videos from twitter</span><span class="kwt">download twitter videos</span></div></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="#c07">07 ↗</a></td>
+            <td class="sub-sm">r/Bilibili</td>
+            <td><span class="rank-tag one">#1</span></td>
+            <td class="kwcell"><span class="kwcount">2 keywords</span><div class="kwtags"><span class="kwt">best bilibili downloader</span><span class="kwt">bilibili downloader</span></div></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="#c08">08 ↗</a></td>
+            <td class="sub-sm">r/TechTalkie</td>
+            <td><span class="rank-tag">#4</span></td>
+            <td class="kwcell"><span class="kwcount">5 keywords</span><div class="kwtags"><span class="kwt">best vimeo downloader</span><span class="kwt">vimeo video downloader</span><span class="kwt">how to save vimeo videos</span><span class="kwt">how to download a video from vimeo</span><span class="kwt">how to download vimeo videos</span></div></td>
+          </tr>
+          <tr>
+            <td class="num"><a href="#c09">09 ↗</a></td>
+            <td class="sub-sm">r/RumbleForum</td>
+            <td><span class="rank-tag one">#1</span></td>
+            <td class="kwcell"><span class="kwcount">5 keywords</span><div class="kwtags"><span class="kwt">rumble video downloader</span><span class="kwt">download rumble videos</span><span class="kwt">best rumble downloader</span><span class="kwt">how to save rumble videos</span><span class="kwt">how can i download rumble videos</span></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ===== PLACEMENT 01 · Mac YouTube ===== -->
+    <article class="card" id="c01">
+      <div class="card-head">
+        <div class="card-meta"><span class="sub">r/macapps</span><span class="dot">·</span><span>12 Jun 2026</span><span class="dot">·</span><span class="cpill">Comment ranked #4 in thread</span></div>
+        <h3 class="card-title">Best YouTube downloader for Mac in 2026</h3>
+        <div class="rankers">
+          <a href="https://www.reddit.com/r/macapps/comments/1r8xptm/best_youtube_downloader_for_mac_in_2026" target="_blank" rel="noopener"><span class="rsub">Root post</span><span class="rttl">reddit.com/r/macapps/comments/1r8xptm/best_youtube_downloader_for_mac_in_2026</span><span class="rgo">View ↗</span></a>
+          <a href="https://www.reddit.com/r/macapps/comments/1r8xptm/comment/ora3up7/" target="_blank" rel="noopener"><span class="rsub">Our comment</span><span class="rttl">reddit.com/r/macapps/comments/1r8xptm/comment/ora3up7</span><span class="rgo">View ↗</span></a>
+        </div>
+        <div class="kw-row"><span class="kw-label">Ranks for 2 keywords</span><span class="kw">best youtube downloader for mac</span><span class="kw">best mac youtube downloader</span></div>
+      </div>
+      <div class="shots">
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">best youtube downloader for mac</span></figcaption><a href="Report/image%207.png" target="_blank" rel="noopener"><img src="Report/image%207.png" alt="Google SERP ranking for best youtube downloader for mac" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">best mac youtube downloader</span></figcaption><a href="Report/image%208.png" target="_blank" rel="noopener"><img src="Report/image%208.png" alt="Google SERP ranking for best mac youtube downloader" loading="lazy"></a></figure>
+      </div>
+    </article>
+
+    <!-- ===== PLACEMENT 02 · YouTube multi-audio ===== -->
+    <article class="card" id="c02">
+      <div class="card-head">
+        <div class="card-meta"><span class="sub">r/DataHoarder</span><span class="dot">·</span><span>14 Jun 2026</span><span class="dot">·</span><span class="cpill one">Comment ranked #1 in thread</span></div>
+        <h3 class="card-title">How to download a YouTube video that has multiple audio tracks</h3>
+        <div class="rankers">
+          <a href="https://www.reddit.com/r/DataHoarder/comments/1l1yxas/how_to_download_video_from_youtube_that_has" target="_blank" rel="noopener"><span class="rsub">Root post</span><span class="rttl">reddit.com/r/DataHoarder/comments/1l1yxas/how_to_download_video_from_youtube_that_has</span><span class="rgo">View ↗</span></a>
+          <a href="https://www.reddit.com/r/DataHoarder/comments/1l1yxas/comment/orjzkf1" target="_blank" rel="noopener"><span class="rsub">Our comment</span><span class="rttl">reddit.com/r/DataHoarder/comments/1l1yxas/comment/orjzkf1</span><span class="rgo">View ↗</span></a>
+        </div>
+        <div class="kw-row"><span class="kw-label">Ranks for 4 keywords</span><span class="kw">download youtube dubbed audio track</span><span class="kw">download youtube video multi language audio</span><span class="kw">youtube multi audio track downloader</span><span class="kw">youtube video multiple language audio download</span></div>
+      </div>
+      <div class="shots">
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">download youtube dubbed audio track</span></figcaption><a href="Report/image%2032.png" target="_blank" rel="noopener"><img src="Report/image%2032.png" alt="Google SERP ranking for download youtube dubbed audio track" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">download youtube video multi language audio</span></figcaption><a href="Report/image%2033.png" target="_blank" rel="noopener"><img src="Report/image%2033.png" alt="Google SERP ranking for download youtube video multi language audio" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">youtube multi audio track downloader</span></figcaption><a href="Report/image%2034.png" target="_blank" rel="noopener"><img src="Report/image%2034.png" alt="Google SERP ranking for youtube multi audio track downloader" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">youtube video multiple language audio download</span></figcaption><a href="Report/image%2035.png" target="_blank" rel="noopener"><img src="Report/image%2035.png" alt="Google SERP ranking for youtube video multiple language audio download" loading="lazy"></a></figure>
+      </div>
+    </article>
+
+    <!-- ===== PLACEMENT 03 · TikTok ===== -->
+    <article class="card" id="c03">
+      <div class="card-head">
+        <div class="card-meta"><span class="sub">r/downr</span><span class="dot">·</span><span>13 Jun 2026</span><span class="dot">·</span><span class="cpill">Comment ranked #2 in thread</span></div>
+        <h3 class="card-title">Best way to download TikTok videos</h3>
+        <div class="rankers">
+          <a href="https://www.reddit.com/r/downr/comments/1mx4lvu/best_way_to_download_tiktok_videos" target="_blank" rel="noopener"><span class="rsub">Root post</span><span class="rttl">reddit.com/r/downr/comments/1mx4lvu/best_way_to_download_tiktok_videos</span><span class="rgo">View ↗</span></a>
+          <a href="https://www.reddit.com/r/downr/comments/1mx4lvu/comment/org0vr5" target="_blank" rel="noopener"><span class="rsub">Our comment</span><span class="rttl">reddit.com/r/downr/comments/1mx4lvu/comment/org0vr5</span><span class="rgo">View ↗</span></a>
+        </div>
+        <div class="kw-row"><span class="kw-label">Ranks for 5 keywords</span><span class="kw">best tiktok downloader</span><span class="kw">how to download tiktok videos</span><span class="kw">download tiktok videos</span><span class="kw">how to save tiktok videos</span><span class="kw">tiktok video downloader</span></div>
+      </div>
+      <div class="shots">
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">best tiktok downloader</span></figcaption><a href="Report/image%209.png" target="_blank" rel="noopener"><img src="Report/image%209.png" alt="Google SERP ranking for best tiktok downloader" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">how to download tiktok videos</span></figcaption><a href="Report/image%2010.png" target="_blank" rel="noopener"><img src="Report/image%2010.png" alt="Google SERP ranking for how to download tiktok videos" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">download tiktok videos</span></figcaption><a href="Report/image%2011.png" target="_blank" rel="noopener"><img src="Report/image%2011.png" alt="Google SERP ranking for download tiktok videos" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">how to save tiktok videos</span></figcaption><a href="Report/image%2012.png" target="_blank" rel="noopener"><img src="Report/image%2012.png" alt="Google SERP ranking for how to save tiktok videos" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">tiktok video downloader</span></figcaption><a href="Report/image%2013.png" target="_blank" rel="noopener"><img src="Report/image%2013.png" alt="Google SERP ranking for tiktok video downloader" loading="lazy"></a></figure>
+      </div>
+    </article>
+
+    <!-- ===== PLACEMENT 04 · yt-dlp alternative ===== -->
+    <article class="card" id="c04">
+      <div class="card-head">
+        <div class="card-meta"><span class="sub">r/DataHoarder</span><span class="dot">·</span><span>14 Jun 2026</span><span class="dot">·</span><span class="cpill">Comment ranked #3 in thread</span></div>
+        <h3 class="card-title">Looking for yt-dlp alternative</h3>
+        <div class="rankers">
+          <a href="https://www.reddit.com/r/DataHoarder/comments/1lcqn3h/looking_for_ytdl_alternative" target="_blank" rel="noopener"><span class="rsub">Root post</span><span class="rttl">reddit.com/r/DataHoarder/comments/1lcqn3h/looking_for_ytdl_alternative</span><span class="rgo">View ↗</span></a>
+          <a href="https://www.reddit.com/r/DataHoarder/comments/1lcqn3h/comment/orkexs3" target="_blank" rel="noopener"><span class="rsub">Our comment</span><span class="rttl">reddit.com/r/DataHoarder/comments/1lcqn3h/comment/orkexs3</span><span class="rgo">View ↗</span></a>
+        </div>
+        <div class="kw-row"><span class="kw-label">Ranks for 1 keyword</span><span class="kw">yt-dlp alternative</span></div>
+      </div>
+      <div class="shots">
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">yt-dlp alternative</span></figcaption><a href="Report/image%2038.png" target="_blank" rel="noopener"><img src="Report/image%2038.png" alt="Google SERP ranking for yt-dlp alternative" loading="lazy"></a></figure>
+      </div>
+    </article>
+
+    <!-- ===== PLACEMENT 05 · Reddit ===== -->
+    <article class="card" id="c05">
+      <div class="card-head">
+        <div class="card-meta"><span class="sub">r/CuttingEdgeEdits</span><span class="dot">·</span><span>14 Jun 2026</span><span class="dot">·</span><span class="cpill one">Comment ranked #1 in thread</span></div>
+        <h3 class="card-title">Is it possible to download videos from Reddit?</h3>
+        <div class="rankers">
+          <a href="https://www.reddit.com/r/CuttingEdgeEdits/comments/1ktm2hv/is_it_possible_to_download_videos_from_reddit" target="_blank" rel="noopener"><span class="rsub">Root post</span><span class="rttl">reddit.com/r/CuttingEdgeEdits/comments/1ktm2hv/is_it_possible_to_download_videos_from_reddit</span><span class="rgo">View ↗</span></a>
+          <a href="https://www.reddit.com/r/CuttingEdgeEdits/comments/1ktm2hv/comment/orjnjq2" target="_blank" rel="noopener"><span class="rsub">Our comment</span><span class="rttl">reddit.com/r/CuttingEdgeEdits/comments/1ktm2hv/comment/orjnjq2</span><span class="rgo">View ↗</span></a>
+        </div>
+        <div class="kw-row"><span class="kw-label">Ranks for 4 keywords</span><span class="kw">reddit video downloader</span><span class="kw">download reddit videos</span><span class="kw">save reddit video with sound</span><span class="kw">best reddit video downloader</span></div>
+      </div>
+      <div class="shots">
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">reddit video downloader</span></figcaption><a href="Report/image%2017.png" target="_blank" rel="noopener"><img src="Report/image%2017.png" alt="Google SERP ranking for reddit video downloader" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">download reddit videos</span></figcaption><a href="Report/image%2018.png" target="_blank" rel="noopener"><img src="Report/image%2018.png" alt="Google SERP ranking for download reddit videos" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">save reddit video with sound</span></figcaption><a href="Report/image%2019.png" target="_blank" rel="noopener"><img src="Report/image%2019.png" alt="Google SERP ranking for save reddit video with sound" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">best reddit video downloader</span></figcaption><a href="Report/image%2020.png" target="_blank" rel="noopener"><img src="Report/image%2020.png" alt="Google SERP ranking for best reddit video downloader" loading="lazy"></a></figure>
+      </div>
+    </article>
+
+    <!-- ===== PLACEMENT 06 · Twitter / X ===== -->
+    <article class="card" id="c06">
+      <div class="card-head">
+        <div class="card-meta"><span class="sub">r/windowsapps</span><span class="dot">·</span><span>13 Jun 2026</span><span class="dot">·</span><span class="cpill one">Comment ranked #1 in thread</span></div>
+        <h3 class="card-title">Any free tools to download videos from X (Twitter)?</h3>
+        <div class="rankers">
+          <a href="https://www.reddit.com/r/windowsapps/comments/1smynpt/any_free_tools_to_download_videos_from_x_twitter" target="_blank" rel="noopener"><span class="rsub">Root post</span><span class="rttl">reddit.com/r/windowsapps/comments/1smynpt/any_free_tools_to_download_videos_from_x_twitter</span><span class="rgo">View ↗</span></a>
+          <a href="https://www.reddit.com/r/windowsapps/comments/1smynpt/comment/orflsvv" target="_blank" rel="noopener"><span class="rsub">Our comment</span><span class="rttl">reddit.com/r/windowsapps/comments/1smynpt/comment/orflsvv</span><span class="rgo">View ↗</span></a>
+        </div>
+        <div class="kw-row"><span class="kw-label">Ranks for 3 keywords</span><span class="kw">free twitter video downloader</span><span class="kw">how to download videos from twitter</span><span class="kw">download twitter videos</span></div>
+      </div>
+      <div class="shots">
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">free twitter video downloader</span></figcaption><a href="Report/image%2014.png" target="_blank" rel="noopener"><img src="Report/image%2014.png" alt="Google SERP ranking for free twitter video downloader" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">how to download videos from twitter</span></figcaption><a href="Report/image%2015.png" target="_blank" rel="noopener"><img src="Report/image%2015.png" alt="Google SERP ranking for how to download videos from twitter" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">download twitter videos</span></figcaption><a href="Report/image%2016.png" target="_blank" rel="noopener"><img src="Report/image%2016.png" alt="Google SERP ranking for download twitter videos" loading="lazy"></a></figure>
+      </div>
+    </article>
+
+    <!-- ===== PLACEMENT 07 · Bilibili ===== -->
+    <article class="card" id="c07">
+      <div class="card-head">
+        <div class="card-meta"><span class="sub">r/Bilibili</span><span class="dot">·</span><span>14 Jun 2026</span><span class="dot">·</span><span class="cpill one">Comment ranked #1 in thread</span></div>
+        <h3 class="card-title">How are you downloading videos from Bilibili?</h3>
+        <div class="rankers">
+          <a href="https://www.reddit.com/r/Bilibili/comments/1qebovb/how_are_you_downloading_videos_from_bilibili/" target="_blank" rel="noopener"><span class="rsub">Root post</span><span class="rttl">reddit.com/r/Bilibili/comments/1qebovb/how_are_you_downloading_videos_from_bilibili</span><span class="rgo">View ↗</span></a>
+          <a href="https://www.reddit.com/r/Bilibili/comments/1qebovb/comment/ork7hiz" target="_blank" rel="noopener"><span class="rsub">Our comment</span><span class="rttl">reddit.com/r/Bilibili/comments/1qebovb/comment/ork7hiz</span><span class="rgo">View ↗</span></a>
+        </div>
+        <div class="kw-row"><span class="kw-label">Ranks for 2 keywords</span><span class="kw">best bilibili downloader</span><span class="kw">bilibili downloader</span></div>
+      </div>
+      <div class="shots">
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">best bilibili downloader</span></figcaption><a href="Report/image%2036.png" target="_blank" rel="noopener"><img src="Report/image%2036.png" alt="Google SERP ranking for best bilibili downloader" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">bilibili downloader</span></figcaption><a href="Report/image%2037.png" target="_blank" rel="noopener"><img src="Report/image%2037.png" alt="Google SERP ranking for bilibili downloader" loading="lazy"></a></figure>
+      </div>
+    </article>
+
+    <!-- ===== PLACEMENT 08 · Vimeo ===== -->
+    <article class="card" id="c08">
+      <div class="card-head">
+        <div class="card-meta"><span class="sub">r/TechTalkie</span><span class="dot">·</span><span>14 Jun 2026</span><span class="dot">·</span><span class="cpill">Comment ranked #4 in thread</span></div>
+        <h3 class="card-title">How to download a video from Vimeo to my computer</h3>
+        <div class="rankers">
+          <a href="https://www.reddit.com/r/TechTalkie/comments/1ktd8c6/how_to_download_a_video_from_vimeo_to_my_computer/" target="_blank" rel="noopener"><span class="rsub">Root post</span><span class="rttl">reddit.com/r/TechTalkie/comments/1ktd8c6/how_to_download_a_video_from_vimeo_to_my_computer</span><span class="rgo">View ↗</span></a>
+          <a href="https://www.reddit.com/r/TechTalkie/comments/1ktd8c6/comment/orjkvlg" target="_blank" rel="noopener"><span class="rsub">Our comment</span><span class="rttl">reddit.com/r/TechTalkie/comments/1ktd8c6/comment/orjkvlg</span><span class="rgo">View ↗</span></a>
+        </div>
+        <div class="kw-row"><span class="kw-label">Ranks for 5 keywords</span><span class="kw">best vimeo downloader</span><span class="kw">vimeo video downloader</span><span class="kw">how to save vimeo videos</span><span class="kw">how to download a video from vimeo</span><span class="kw">how to download vimeo videos</span></div>
+      </div>
+      <div class="shots">
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">best vimeo downloader</span></figcaption><a href="Report/image%2021.png" target="_blank" rel="noopener"><img src="Report/image%2021.png" alt="Google SERP ranking for best vimeo downloader" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">vimeo video downloader</span></figcaption><a href="Report/image%2022.png" target="_blank" rel="noopener"><img src="Report/image%2022.png" alt="Google SERP ranking for vimeo video downloader" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">best vimeo downloader</span></figcaption><a href="Report/image%2023.png" target="_blank" rel="noopener"><img src="Report/image%2023.png" alt="Google SERP ranking for best vimeo downloader" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">how to save vimeo videos</span></figcaption><a href="Report/image%2024.png" target="_blank" rel="noopener"><img src="Report/image%2024.png" alt="Google SERP ranking for how to save vimeo videos" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">how to download a video from vimeo</span></figcaption><a href="Report/image%2025.png" target="_blank" rel="noopener"><img src="Report/image%2025.png" alt="Google SERP ranking for how to download a video from vimeo" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">how to download vimeo videos</span></figcaption><a href="Report/image%2026.png" target="_blank" rel="noopener"><img src="Report/image%2026.png" alt="Google SERP ranking for how to download vimeo videos" loading="lazy"></a></figure>
+      </div>
+    </article>
+
+    <!-- ===== PLACEMENT 09 · Rumble ===== -->
+    <article class="card" id="c09">
+      <div class="card-head">
+        <div class="card-meta"><span class="sub">r/RumbleForum</span><span class="dot">·</span><span>14 Jun 2026</span><span class="dot">·</span><span class="cpill one">Comment ranked #1 in thread</span></div>
+        <h3 class="card-title">How can I download Rumble videos?</h3>
+        <div class="rankers">
+          <a href="https://www.reddit.com/r/RumbleForum/comments/136yy88/how_can_i_download_rumble_videos" target="_blank" rel="noopener"><span class="rsub">Root post</span><span class="rttl">reddit.com/r/RumbleForum/comments/136yy88/how_can_i_download_rumble_videos</span><span class="rgo">View ↗</span></a>
+          <a href="https://www.reddit.com/r/RumbleForum/comments/136yy88/comment/orjzbnr" target="_blank" rel="noopener"><span class="rsub">Our comment</span><span class="rttl">reddit.com/r/RumbleForum/comments/136yy88/comment/orjzbnr</span><span class="rgo">View ↗</span></a>
+        </div>
+        <div class="kw-row"><span class="kw-label">Ranks for 5 keywords</span><span class="kw">rumble video downloader</span><span class="kw">download rumble videos</span><span class="kw">best rumble downloader</span><span class="kw">how to save rumble videos</span><span class="kw">how can i download rumble videos</span></div>
+      </div>
+      <div class="shots">
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">rumble video downloader</span></figcaption><a href="Report/image%2027.png" target="_blank" rel="noopener"><img src="Report/image%2027.png" alt="Google SERP ranking for rumble video downloader" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">download rumble videos</span></figcaption><a href="Report/image%2028.png" target="_blank" rel="noopener"><img src="Report/image%2028.png" alt="Google SERP ranking for download rumble videos" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">best rumble downloader</span></figcaption><a href="Report/image%2029.png" target="_blank" rel="noopener"><img src="Report/image%2029.png" alt="Google SERP ranking for best rumble downloader" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">how to save rumble videos</span></figcaption><a href="Report/image%2030.png" target="_blank" rel="noopener"><img src="Report/image%2030.png" alt="Google SERP ranking for how to save rumble videos" loading="lazy"></a></figure>
+        <figure class="shot"><figcaption><span class="q-label">Keyword</span><span class="q-text">how can i download rumble videos</span></figcaption><a href="Report/image%2031.png" target="_blank" rel="noopener"><img src="Report/image%2031.png" alt="Google SERP ranking for how can i download rumble videos" loading="lazy"></a></figure>
+      </div>
+    </article>
+
+  </section>
+
+</div>
+
+<footer>
+  <div class="m81card">
+    <div class="m81-watermark">M81 MEDIA</div>
+    <div class="m81card-inner">
+      <div class="m81-lock"><img src="m81-logo.png" alt="M81"><span class="bname">M81</span></div>
+      <div class="m81-method">
+        <p class="fineprint"><strong>How we pulled this.</strong> Each ranking was captured from a live Google results page using SerpApi. The dark panel on the right of every screenshot is the raw API response for that search. Rankings shift by location, device and over time, so these are snapshots from when we ran them.</p>
+        <div class="src">
+          <span>Search engine: Google</span><span>Location: United States</span><span>Device: Desktop</span><span>Source: SerpApi</span><span>Period: May 14 – Jun 14, 2026</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
